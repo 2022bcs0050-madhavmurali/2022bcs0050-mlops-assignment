@@ -174,5 +174,7 @@ def main():
 
     save_artifacts(best_model, metrics, MODEL_SAVE_PATH, METRICS_SAVE_PATH)
 
+
+#random insertion to trigger git push
 if __name__ == "__main__":
     main()
