@@ -1,0 +1,112 @@
+name: Lab 4 Model Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Train Model
+      run: python scripts/train.py
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: model-artifacts
+        path: |
+          models/model.pkl
+          metrics.json
+
+  deploy:
+    needs: train
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # We need appropriate permissions for gh variable set if using GITHUB_TOKEN, 
+      # but usually Variables require write access which GITHUB_TOKEN might not have unless set.
+      # User instructions specifically asked for a PAT, so we use secrets.GH_PAT.
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: model-artifacts
+        # Files will be downloaded to current directory, preserving validation: 
+        # models/model.pkl and metrics.json
+
+    - name: Compare Metrics
+      id: check_metrics
+      shell: bash
+      env:
+        # Using PAT for variable access if configured, else fallback to GITHUB_TOKEN (might fail for variables)
+        GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        BEST_R2: ${{ vars.BEST_R2 }}
+      run: |
+        echo "Comparing metrics..."
+        
+        # Read new R2 from metrics.json
+        # install jq if needed, but it is standard on ubuntu-latest
+        NEW_R2=$(jq -r '.R2_Score' metrics.json)
+        echo "New R2 Score: $NEW_R2"
+        
+        # Default to -infinity if variable is empty or not set
+        CURRENT_BEST=${BEST_R2:--100}
+        echo "Current Best R2: $CURRENT_BEST"
+        
+        # Logic: Check if New > Current
+        # Using bc for float comparison
+        if (( $(echo "$NEW_R2 > $CURRENT_BEST" | bc -l) )); then
+          echo "Metric improved!"
+        else
+          echo "2022BCS0050:----Metric did not improve"
+          exit 1
+        fi
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        # Tag using the Docker Username
+        tags: ${{ secrets.DOCKER_USERNAME }}/wine-quality-prediction:latest
+
+    - name: Update Best Metrics
+      env:
+        GH_TOKEN: ${{ secrets.GH_PAT || secrets.MLOPS_GIT_KEY }}
+      run: |
+        NEW_R2=$(jq -r '.R2_Score' metrics.json)
+        NEW_MSE=$(jq -r '.MSE' metrics.json)
+        
+        echo "Updating BEST_R2 to $NEW_R2"
+        gh variable set BEST_R2 --body "$NEW_R2"
+        
+        echo "Updating BEST_MSE to $NEW_MSE"
+        gh variable set BEST_MSE --body "$NEW_MSE"
