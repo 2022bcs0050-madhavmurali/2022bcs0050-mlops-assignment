@@ -18,3 +18,7 @@ requirements.txt
 src/training.py
 src/data_preprocessing.py
 src/evaluate.py
+.venv
+madhavbcs50-assgn
+mlruns
+mlflow.db
