@@ -19,21 +19,45 @@ STUDENT_NAME = "Madhav Murali"
 ROLL_NUMBER = "2022BCS0050"
 EXPERIMENT_NAME = "2022bcs0050_experiment"
 
-# Explicitly use an unambiguous Local SQLite backend to securely sync tracking states
-script_dir = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(script_dir, "../mlflow.db")
-mlflow.set_tracking_uri(f"sqlite:///{db_path}")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+MLRUNS_DIR = os.path.join(BASE_DIR, "mlruns")
 
-# Set MLflow experiment
+os.makedirs(MLRUNS_DIR, exist_ok=True)
+
+mlflow.set_tracking_uri(f"sqlite:///{os.path.join(BASE_DIR, 'mlflow.db')}")
+
+experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
+if experiment is None:
+    mlflow.create_experiment(
+        EXPERIMENT_NAME,
+        artifact_location=f"file://{MLRUNS_DIR}"
+    )
+
 mlflow.set_experiment(EXPERIMENT_NAME)
-script_dir = os.path.dirname(os.path.abspath(__file__))
-DATA_V1_PATH = os.path.join(script_dir, "../data/dataset_v1.csv")
-DATA_V2_PATH = os.path.join(script_dir, "../data/dataset_v2.csv")
-METRICS_OUTPUT = os.path.join(script_dir, "../outputs/metrics.json")
 
-# Make outputs directory if it doesn't exist
-os.makedirs(os.path.join(script_dir, "../outputs"), exist_ok=True)
-os.makedirs(os.path.join(script_dir, "../models"), exist_ok=True)
+DATA_V1_PATH = os.path.join(BASE_DIR, "data/dataset_v1.csv")
+DATA_V2_PATH = os.path.join(BASE_DIR, "data/dataset_v2.csv")
+METRICS_OUTPUT = os.path.join(BASE_DIR, "outputs/metrics.json")
+MODEL_PATH = os.path.join(BASE_DIR, "models/model.pkl")
+
+os.makedirs(os.path.join(BASE_DIR, "outputs"), exist_ok=True)
+os.makedirs(os.path.join(BASE_DIR, "models"), exist_ok=True)
+
+# # Explicitly use an unambiguous Local SQLite backend to securely sync tracking states
+# script_dir = os.path.dirname(os.path.abspath(__file__))
+# db_path = os.path.join(script_dir, "../mlflow.db")
+# mlflow.set_tracking_uri(f"sqlite:///{db_path}")
+
+# # Set MLflow experiment
+# mlflow.set_experiment(EXPERIMENT_NAME)
+# script_dir = os.path.dirname(os.path.abspath(__file__))
+# DATA_V1_PATH = os.path.join(script_dir, "../data/dataset_v1.csv")
+# DATA_V2_PATH = os.path.join(script_dir, "../data/dataset_v2.csv")
+# METRICS_OUTPUT = os.path.join(script_dir, "../outputs/metrics.json")
+
+# # Make outputs directory if it doesn't exist
+# os.makedirs(os.path.join(script_dir, "../outputs"), exist_ok=True)
+# os.makedirs(os.path.join(script_dir, "../models"), exist_ok=True)
 
 def load_data(path, feature_selection=False):
     """ Loads data from a CSV, optionally applying feature selection. """
@@ -99,7 +123,7 @@ def main():
     # Ensure datasets exist, falling back to full dataset if not created by DVC yet
     if not os.path.exists(DATA_V1_PATH) or not os.path.exists(DATA_V2_PATH):
         print(f"Creating missing dataset files directly from winequality-red.csv...")
-        full_df = pd.read_csv(os.path.join(script_dir, "../data/winequality-red.csv"), sep=";")
+        full_df = pd.read_csv(os.path.join(BASE_DIR, "data/winequality-red.csv"), sep=";")
         full_df.head(501).to_csv(DATA_V1_PATH, sep=";", index=False)
         full_df.to_csv(DATA_V2_PATH, sep=";", index=False)
 
@@ -131,7 +155,7 @@ def main():
         is_v2=True
     )
     import joblib
-    joblib.dump(model3, os.path.join(script_dir, "../models/model.pkl")) 
+    joblib.dump(model3, MODEL_PATH) 
     results.append(r3)
 
     # Run 4: Version 2, Model A (Feature selection)
