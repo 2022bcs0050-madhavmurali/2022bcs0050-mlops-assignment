@@ -1,3 +1,12 @@
-Assignment for MLOps Batch-2 Lab-2
+# Assignment for MLOps Batch-2 Lab-2
 
-By- Madhav Murali (2022BCS0050)
+## Identification
+| Component | Details |
+| :--- | :--- |
+| **Name** | Madhav Murali |
+| **Roll Number** | 2022BCS0050 |
+
+## Repository Info
+GitHub Repository Name: `2022bcs0050-mlops`
+Docker Image Name: `2022bcs0050madhavmurali/2022bcs0050-mlops`
+MLflow Experiment Name: `2022bcs0050_experiment`

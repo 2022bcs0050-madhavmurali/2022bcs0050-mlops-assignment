@@ -10,9 +10,9 @@ COPY requirements_inference.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements_inference.txt
 
-# Copy source code and model
-COPY src/inference/ ./src/inference/
+# Create the directory structure exactly as expected
 COPY models/ ./models/
+COPY src/ ./src/
 
 # Expose port 8000
 EXPOSE 8000

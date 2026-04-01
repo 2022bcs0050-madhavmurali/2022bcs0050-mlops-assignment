@@ -1,0 +1,14 @@
+artifact_uri: file:///home/madhav/home/mlops/assignment/mlruns/554880379647221778/ce0497e5c0664c9999179a5629d3bea5/artifacts
+end_time: 1775028131138
+entry_point_name: ''
+experiment_id: '554880379647221778'
+lifecycle_stage: active
+run_id: ce0497e5c0664c9999179a5629d3bea5
+run_name: Run 3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775028125905
+status: 3
+tags: []
+user_id: madhav

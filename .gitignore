@@ -3,3 +3,7 @@ models/
 *.pkl
 *.json
 *.ipynb
+.venv
+madhavbcs50-assgn
+.env
+ffs/
